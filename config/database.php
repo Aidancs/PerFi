@@ -1,6 +1,48 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| Heroku Redis Configuration
+|--------------------------------------------------------------------------
+|
+| Heroku makes its Redis settings available via a single environment
+| variable named "REDIS_URL". The following code breaks apart this
+| URL, and reassigns them to our expected environment variables.
+|
+*/
+
+if (getenv('REDIS_URL')) {
+    $url = parse_url(getenv('REDIS_URL'));
+
+    putenv('REDIS_HOST='.$url['host']);
+    putenv('REDIS_PORT='.$url['port']);
+    putenv('REDIS_PASSWORD='.$url['pass']);
+}
+
+if (getenv('DATABASE_URL')) {
+    $url = parse_url(getenv('DATABASE_URL'));
+
+    putenv('DB_HOST='.$url['host']);
+    putenv('DB_PORT='.$url['port']);
+    putenv('DB_DATABASE='.substr($url['path'], 1));
+    putenv('DB_USERNAME='.$url['user']);
+    putenv('DB_PASSWORD='.$url['pass']);
+}
+
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDO Fetch Style
+    |--------------------------------------------------------------------------
+    |
+    | By default, database results will be returned as instances of the PHP
+    | stdClass object; however, you may desire to retrieve records in an
+    | array format for simplicity. Here you can tweak the fetch style.
+    |
+    */
+
+    'fetch' => PDO::FETCH_CLASS,
 
     /*
     |--------------------------------------------------------------------------
@@ -13,7 +55,7 @@ return [
     |
     */
 
-    'default' => env('DB_CONNECTION', 'mysql'),
+    'default' => env('DB_CONNECTION', 'pgsql'),
 
     /*
     |--------------------------------------------------------------------------
@@ -33,49 +75,30 @@ return [
 
     'connections' => [
 
-        'sqlite' => [
-            'driver' => 'sqlite',
-            'database' => env('DB_DATABASE', database_path('database.sqlite')),
-            'prefix' => '',
-        ],
-
-        'mysql' => [
-            'driver' => 'mysql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '3306'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
-            'charset' => 'utf8mb4',
-            'collation' => 'utf8mb4_unicode_ci',
-            'prefix' => '',
-            'strict' => true,
-            'engine' => null,
-        ],
-
         'pgsql' => [
             'driver' => 'pgsql',
-            'host' => env('DB_HOST', '127.0.0.1'),
-            'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+            'host' => env('DB_HOST'),
+            'port' => env('DB_PORT', 5432),
+            'database' => env('DB_DATABASE'),
+            'username' => env('DB_USERNAME'),
+            'password' => env('DB_PASSWORD'),
             'charset' => 'utf8',
             'prefix' => '',
             'schema' => 'public',
-            'sslmode' => 'prefer',
         ],
 
-        'sqlsrv' => [
-            'driver' => 'sqlsrv',
-            'host' => env('DB_HOST', 'localhost'),
-            'port' => env('DB_PORT', '1433'),
-            'database' => env('DB_DATABASE', 'forge'),
-            'username' => env('DB_USERNAME', 'forge'),
-            'password' => env('DB_PASSWORD', ''),
+        'testing' => [
+            // PG_USER and PG_PASSWORD are used by Codeship,
+            // and there is no way around this at this time.
+            'driver' => 'pgsql',
+            'host' => env('TEST_DB_HOST'),
+            'port' => env('TEST_DB_PORT', 5432),
+            'database' => env('TEST_DB_DATABASE'),
+            'username' => env('PG_USER', env('TEST_DB_USERNAME')),
+            'password' => env('PG_PASSWORD', env('TEST_DB_PASSWORD')),
             'charset' => 'utf8',
             'prefix' => '',
+            'schema' => 'public',
         ],
 
     ],
@@ -106,10 +129,10 @@ return [
 
     'redis' => [
 
-        'client' => 'predis',
+        'cluster' => false,
 
         'default' => [
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'host' => env('REDIS_HOST', 'localhost'),
             'password' => env('REDIS_PASSWORD', null),
             'port' => env('REDIS_PORT', 6379),
             'database' => 0,
