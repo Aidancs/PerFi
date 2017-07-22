@@ -14,3 +14,13 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/welcome', function () {
+    return view('welcome');
+});
+
+Auth::routes();
+
+Route::get('/home', 'BankAccountsController@index')->name('home');
+Route::get('/setup', 'BankAccountsController@store')->name('setup');
+
